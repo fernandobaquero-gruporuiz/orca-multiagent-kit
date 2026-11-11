@@ -17,6 +17,15 @@ Lee `./ORCHESTRATION.md` (si no existe, valores por defecto entre paréntesis):
   | `auto` | **2)** y **3)**; el plan se muestra pero no espera respuesta |
   En ningún nivel se mergea a la rama por defecto, se hace push ni se borran worktrees o ramas sin confirmación. Las decisiones de producto que surjan siempre se preguntan.
 - **Proveedores activos**, **dominios sensibles**, **excepciones de reparto**, **ficheros `shared`**, **máximo de workers** (3), **revisión cruzada**, **reintentos** (1), **entorno de worktree**.
+- **Ficha antigua o incompleta** (proyecto inicializado con una versión anterior, o sin `ORCHESTRATION.md`): no pidas al usuario que reinicialice. Deduce tú lo que falte, úsalo en este run y dilo en una línea del plan (`ficha: deducido <qué>`):
+  | Falta | Cómo se deduce |
+  |---|---|
+  | Proveedores activos | CLIs de agente instalados y, con Orca, los agentes que acepta `worker-start`; como mínimo, el proveedor del coordinador |
+  | Dominios sensibles | Los de `references/olimpo.md` más las rutas de auth, permisos, pagos, dinero, fiscal o tenancy que existan en el repo |
+  | Setup de worktree (o sigue en `TODO:`) | Comando `install` de `STACK.md` §3 (o del manifiesto) y los `.env*` gitignorados de desarrollo que existan en el checkout |
+  | `.env` que la app necesita y no está en `.worktreeinclude` | Se copia igualmente con el bloque `SETUP` del despacho, tras comprobar que es de desarrollo |
+  | Rama padre | La rama por defecto de `origin` |
+  Al cerrar el run, ofrece **una vez** guardar lo deducido en `ORCHESTRATION.md`, `orca.yaml` y `.worktreeinclude` (son ficheros del proyecto: no los edites sin ese «sí»). La tabla antigua «Agentes por capa» sigue valiendo como excepciones.
 - **Run a medias**: si existe `.work/runs/*/run.md` con `status: active` para este mismo trabajo, no planifiques de nuevo: reanuda con `references/ledger.md` §Reanudar.
 - **Limpieza pendiente**: si algún `run.md` tiene `cleanup: pending`, dilo en una línea antes de seguir (`ORCA: limpieza pendiente del run <run> — <n> worktrees, <m> ramas`) y ofrece hacerla (`references/integrate.md` §6).
 

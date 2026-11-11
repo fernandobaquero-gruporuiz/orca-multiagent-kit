@@ -62,6 +62,10 @@ El recurso se decide unidad a unidad, y un run puede mezclar varios.
 
 El plan de rondas enseña el rol, el nivel, el modelo y el recurso de cada unidad antes de que digas «sí».
 
+### Proyectos que ya tenías inicializados
+
+No hay que reinicializarlos. Si a su `ORCHESTRATION.md` le faltan los datos nuevos (proveedores activos, dominios sensibles, setup de worktree) o su `.worktreeinclude` no lista el `.env` que la app necesita, la skill lo deduce al empezar el run, lo usa y te lo dice en una línea del plan. Al cerrar el run te ofrece una vez guardarlo en los ficheros del proyecto.
+
 ### Ciclo de vida de un worktree
 
 1. **Base fresca.** Antes de planificar, `git fetch` y comparación de la rama padre con `origin`. Si la local va por detrás, se parte de `origin`; si tiene commits sin subir, se te pregunta. La comprobación se repite antes del merge final.
