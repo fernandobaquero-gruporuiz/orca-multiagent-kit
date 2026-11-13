@@ -30,7 +30,8 @@ ${bold('Uso')}
 ${bold('Comandos')}
   ${lime('setup')}    [--yes] [--dry-run]          Lo instala todo: reglas y skills, omk en el PATH, plugin de Orca y su panel
            [--no-plugin] [--no-path] [--no-hooks]
-  ${lime('install')}  [--agents a,b] [--dry-run]   Solo la fuente única en ~/.agents (y el plugin de Orca, si ya lo tienes)
+  ${lime('install')}  [--agents a,b] [--dry-run]   Solo la fuente única en ~/.agents (y el plugin de Orca, si ya lo tienes);
+           [--no-project]                     si sube de versión dentro de un proyecto del kit, lo pone al día como update
   ${lime('init')}     [ruta]                       Prepara un proyecto (por defecto, la carpeta actual)
   ${lime('verify')}                                Comprueba enlaces, imports y copias divergentes
   ${lime('plugin')}   install|status|uninstall     El plugin de Orca del kit (install pide tu aprobación)
@@ -210,7 +211,26 @@ switch (cmd) {
     // «omk install») también se lleva el plugin.
     const { parseOptions, refreshPlugin } = require('./setup');
     const { applyHooks } = require('./hooks');
-    const opts = parseOptions(rest);
+    // --no-project solo cuenta aquí (install.sh no la conoce): evita la puesta al día del proyecto de abajo.
+    const noProject = rest.includes('--no-project');
+    const opts = parseOptions(rest.filter((a) => a !== '--no-project'));
+    // Subida de versión dentro de un proyecto del kit: es lo que llama el «omk update» de una versión
+    // anterior al terminar. Se hace entero, como «omk update --offline», para que también se ponga al
+    // día el proyecto y no haga falta actualizar dos veces.
+    const upgrade = require('./update');
+    let installed = '';
+    try {
+      installed = fs.readFileSync(path.join(AGENTS_HOME, 'AGENT_KIT_VERSION'), 'utf8').trim();
+    } catch (e) {
+      if (e.code !== 'ENOENT') throw e;
+    }
+    if (installed && upgrade.newer(VERSION, installed) && !noProject && upgrade.kitProject(process.cwd())) {
+      console.log(`${lime('›')} ~/.agents tiene la v${installed} y este omk es la v${VERSION}: actualizo también este proyecto (como omk update)`);
+      finish(upgrade.update({
+        kit: KIT, version: VERSION, args: ['--offline', ...rest], installer, standalone: STANDALONE, agentsHome: AGENTS_HOME,
+      }));
+      break;
+    }
     finish(installer(opts.rest).then(async (code) => {
       if (code !== 0) return code;
       const omkBinary = STANDALONE ? require('./setup').installedOmk() : null;

@@ -126,6 +126,19 @@ check "no abre Orca ni reinstala el plugin"            '! called "open" && ! cal
 cp "$F" "$W/antes"
 check "repetirlo no cambia el proyecto ni el plugin"   'update && cmp -s "$F" "$W/antes" && said "ya tiene todos los apartados" && [ "$(grep -cF "plugin update" "$STATE.calls")" = 1 ] && said "ya estaba instalado"'
 
+echo "== omk install tras el update de una versión anterior (lo que lanza el omk update de la v1.6.0)"
+# El omk update de la v1.6.0 instala el paquete nuevo y termina con «omk install»: con ~/.agents aún en la
+# versión anterior y dentro de un proyecto del kit, install lo hace todo, como un update.
+install_in() { (cd "$1" && HOME="$H" USERPROFILE="$(wpath "$H")" node "$ROOT/bin/omk.js" install --agents claude "${@:2}") </dev/null >"$OUT" 2>&1; }
+old_project; printf '1.6.0\n' > "$H/.agents/AGENT_KIT_VERSION"; installed 0.0.1 running ""
+check "sube de versión: pone al día también el proyecto" 'install_in "$P" && said "actualizo también este proyecto" && has "## 0. Autonomía" && line "- Máximo de workers simultáneos: 5" && called "plugin update $KEY" && [ "$(cat "$H/.agents/AGENT_KIT_VERSION")" = "$(cat "$ROOT/VERSION")" ]'
+old_project; cp "$F" "$W/antes"
+check "misma versión: install no toca el proyecto"     'install_in "$P" --no-plugin && ! said "actualizo también" && cmp -s "$F" "$W/antes"'
+printf '1.6.0\n' > "$H/.agents/AGENT_KIT_VERSION"
+check "--no-project lo deja como un install normal"    'install_in "$P" --no-plugin --no-project && ! said "actualizo también" && cmp -s "$F" "$W/antes"'
+mkdir -p "$W/otra"; printf '1.6.0\n' > "$H/.agents/AGENT_KIT_VERSION"
+check "fuera de un proyecto del kit, install normal"   'install_in "$W/otra" --no-plugin && ! said "actualizo también" && [ -z "$(ls -A "$W/otra")" ]'
+
 echo "== omk update: plugin"
 installed 0.0.1 running ',"updateNeedsApproval":true'
 check "sin --yes ni terminal no aprueba y sale con error" '! update --no-project && said "Orca pide tu aprobación" && ! called "--approve" && said "terminado con fallos"'
