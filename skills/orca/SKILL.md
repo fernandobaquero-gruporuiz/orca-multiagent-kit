@@ -38,6 +38,16 @@ Lee `./ORCHESTRATION.md` (si no existe, valores por defecto entre paréntesis):
   Al cerrar el run, ofrece **una vez** guardar lo deducido en `ORCHESTRATION.md`, `orca.yaml` y `.worktreeinclude` (son ficheros del proyecto: no los edites sin ese «sí»). La tabla antigua «Agentes por capa» sigue valiendo como excepciones.
 - **Run a medias**: si existe `.work/runs/*/run.md` con `status: active` para este mismo trabajo, no planifiques de nuevo: reanuda con `references/ledger.md` §Reanudar.
 - **Limpieza pendiente**: si algún `run.md` tiene `cleanup: pending`, dilo en una línea antes de seguir (`ORCA: limpieza pendiente del run <run> — <n> worktrees, <m> ramas`) y ofrece hacerla (`references/integrate.md` §6).
+- **Motor `omk run`**: lo mecánico del run (estado, rondas, worktrees, alcance, merge y limpieza) lo hace el CLI del kit, no tu memoria. Ejecútalo desde tu checkout (con Orca, tu workspace), donde vive `.work/runs/<run>/`. Si `omk run help` no responde (kit antiguo o sin `omk` en el `PATH`), sigue los pasos a mano de cada referencia y dilo en el plan (`ficha: sin omk run`).
+  | Paso | Orden |
+  |---|---|
+  | §2 unidades escritas | `omk run new <run> --input "<entrada>" --engine <motor> --autonomy <nivel> --integration <rama>` y `omk run plan <run>` |
+  | §3 «sí» | `omk run meta <run> status=active confirm1=<fecha>` |
+  | §4 base fresca | `omk run start <run> --parent <padre>` |
+  | §5 cada unidad con worktree propio | `omk run worktree <run> <U>`; `omk run set <run> <U> status=dispatching` antes de lanzar y `status=dispatched ref=<id>` después |
+  | §7 revisar e integrar | `omk run check <run> <U>`, `omk run set <run> <U> status=accepted` y `omk run merge <run> <U>` |
+  | §8 limpieza | `omk run cleanup <run>` (inventario) y, con el «sí», `omk run cleanup <run> --apply` |
+  Salida 1 = rechazo con su motivo: arregla la causa, no lo rodees con git a mano. Salida 3 = decisión del usuario (una pregunta). `omk run status` enseña el run y `omk run log <run> <texto>` anota lo demás.
 
 ## 1. ¿Compensa? (decídelo en menos de un minuto)
 Criterio y cuenta rápida en `~/.agents/rules/95-multi-agent.md` §Cuándo paralelizar: ≥2 unidades independientes, `write` disjuntos, ≥15 min cada una, verificables por separado, y el ahorro supera el coste de coordinar.
@@ -55,7 +65,7 @@ Identifica la entrada y lee **solo** su adaptador:
 | Plan nativo recién aprobado o con «implementa el plan» (modo plan de Claude, `implementation_plan.md` de Antigravity) | `references/adapters/native-plan.md` |
 | Prompt de chat o ticket | `references/adapters/chat.md` (si es grande y vago, primero `references/plan.md`) |
 | Mockup, diseño, documento | `references/adapters/artifact.md` |
-Escribe las unidades con el formato de `references/units.md` en `.work/runs/<run>/units.md` (`.work/` en `.gitignore`).
+Escribe las unidades con el formato de `references/units.md` en `.work/runs/<run>/units.md` (`.work/` en `.gitignore`) y pásale `omk run plan <run>`: con errores (globs anchos, ciclos, `write` que pisa `shared`, campos que faltan) corrige `units.md` antes de enseñar nada. Las rondas de la tabla de §3 son las que calcula (con el motivo de cada empuje por solape), y su línea `compensa:` es la cuenta de §1 con datos: si dice `no`, el veredicto pasa a `ORCA: secuencial — <su motivo>`.
 
 Después, con `references/olimpo.md`, da a cada unidad su **rol** (de él salen el nivel de modelo y quién la revisa), comprueba los modelos disponibles de cada proveedor activo y elige proveedor. Con `~/.agents/rules/95-multi-agent.md` §Recurso por unidad, elige su **recurso** (coordinador, subagente de solo lectura, subagente con worktree, worker de Orca o manual). Nada de esto se improvisa, y si una unidad va con el modelo por defecto del proveedor, el plan lo dice.
 
@@ -77,7 +87,7 @@ merge final: feat/003-recargas → main (te lo pediré al terminar; después, la
 - `<alto>`, `<medio>`: el valor real de `~/.agents/models.md` para ese proveedor, o `por defecto` si ese nivel no tiene modelo ahí.
 - La línea `modelos:` solo aparece si `references/olimpo.md` §Modelos ha clasificado un modelo nuevo o tiene algo que avisar. Es informativa: el nivel lo decide el coordinador con evidencia, no se le pregunta al usuario.
 - **Tarjeta del plan** (solo en Orca): crea antes el Run de Orca (`run-create`, `references/engine-orca.md`) y, justo antes de enseñar la tabla, escribe el mismo plan con su id (`orcaRun`) en `.work/runs/<run>/plan.json` (`references/plan-card.md`). El plugin del kit lo enseña en su pestaña Avisos con «Sí» y «Cambiar». La respuesta te llega en tu terminal, o, si corres como chat, como mensaje del buzón del Run con asunto «Respuesta desde el panel: …»: para la **confirmación 1** vale igual que si la escribiera el usuario. Las confirmaciones 2 y 3 (merge final y limpieza) solo valen escritas en el chat. Si no puedes escribir el plan, sigue sin él: la tabla del chat manda.
-- El «sí» autoriza los commits y merges **del run** en ramas de trabajo y en la rama de integración, Con el «sí», crea `.work/runs/<run>/run.md` (`references/ledger.md`): desde aquí, cada paso se anota **antes** de hacerlo.
+- El «sí» autoriza los commits y merges **del run** en ramas de trabajo y en la rama de integración. Con el «sí», `run.md` (`references/ledger.md`, creado por `omk run new`) pasa a `status: active`: desde aquí, cada paso se anota **antes** de hacerlo.
 
 ## 4. Base fresca y base común (U0)
 **Antes del plan** (la línea `base:` sale de aquí): nunca partas de una rama local sin contrastarla con su remoto.
@@ -96,6 +106,7 @@ git rev-list --left-right --count origin/<padre>...<padre>     # <detrás>  <del
 - Si la rama de integración ya existe (feature empezada), compárala igual con su remoto y con `origin/<padre>`; si `<padre>` ha avanzado, dilo en el plan.
 - `--no-track` siempre que la rama de integración nazca de una ref remota: sin él, su upstream sería `origin/<padre>` y un push desde ella podría ir a la rama padre.
 - Anota en `run.md` `base_ref` y su sha. Todo worktree del run sale de la rama de integración; ninguno sale de `<padre>` directamente.
+- Con `omk run`: el `fetch` y la cuenta de arriba (solo lectura) dan la línea `base:` del plan; tras el «sí», `omk run start <run> --parent <padre>` aplica la misma tabla, crea la rama con `--no-track` (o se cambia a ella si existe) y anota `base_ref`. Si sale con 3 (local por delante), usa la respuesta del usuario: `--from remote` o `--from local`.
 
 Después haz tú la ronda 0, pasa `csr-gate` y haz commit en la rama de integración. Todas las unidades parten de ese commit.
 
@@ -104,6 +115,7 @@ Cada unidad usa el recurso que le tocó en el plan. Orca solo si `orca status --
 Mensaje de despacho (todo dentro del mensaje: el worker no ve tu checkout ni tu conversación):
 ```
 UNIT: U2 — <título>     RUN: <run>     BASE: <sha>     PUERTO DEV: <PORT_BASE+n>
+WORKTREE: <sin Orca: ruta absoluta del worktree de la unidad (omk run worktree) y su rama wt/<run>/u2>
 ROL: Ariadna · código sensible · nivel alto — <guardarraíl de su fila en olimpo.md>
 <bloque completo de la unidad, tal cual está en units.md>
 Shared (no tocar salvo los de tu unidad): <lista de ORCHESTRATION.md>
@@ -131,7 +143,7 @@ rama: feat/003-recargas (+1.240/−310, 46 ficheros)
 BLOCKED/DEFERRED: <si aplica>
 ¿Mergeo feat/003-recargas en main? (o abre PR)
 ```
-Antes de pedir el merge final repite el `git fetch` de §4: si `<padre>` ha avanzado, trae `origin/<padre>` a la rama de integración (merge, sin reescribir), repite `csr-gate` y enseña la tabla actualizada.
+Antes de pedir el merge final repite el `git fetch` de §4 (o `omk run start <run> --parent <padre>`, que lo avisa): si `<padre>` ha avanzado, trae `origin/<padre>` a la rama de integración (merge, sin reescribir), repite `csr-gate` y enseña la tabla actualizada.
 
 **Confirmación 3 — limpieza.** Tras el merge final (o cuando el usuario confirme que el PR está fusionado), enseña el inventario de lo que el run ha dejado (worktrees, ramas, copias de `.env`) y pide permiso para borrarlo: `references/integrate.md` §6. No se borra nada sin ese «sí», y el run no se cierra sin haberlo preguntado: con un «no», `cleanup: pending` en `run.md`. Después, `run.md` a `status: done`.
 - **Si vienes del hook de spec-kit**: todas las tareas quedan marcadas `[x]`. Di en una línea «Tareas completadas por la orquestación; /speckit.implement solo debe validar y ejecutar sus hooks posteriores» y devuelve el control. Si el run queda a medias (unidades `BLOCKED` o en curso), devuelve `ORCA: pendiente — …` (ver `speckit-orca-implement`): implement no debe hacer las tareas restantes por su cuenta mientras haya intentos abiertos.

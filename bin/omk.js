@@ -36,6 +36,7 @@ ${bold('Comandos')}
   ${lime('plugin')}   install|status|uninstall     El plugin de Orca del kit (install pide tu aprobación)
   ${lime('team')}     [set …]                      Enseña o cambia el equipo de roles y la autonomía de ORCHESTRATION.md
   ${lime('gate')}     on|off|status                La puerta de reparto obligatoria de Claude Code (hooks/orca-gate.cjs)
+  ${lime('run')}      <subcomando>                 El motor de los runs de la skill orca: estado, rondas, worktrees, merge y limpieza (omk run help)
   ${lime('adopt')}    <carpeta-skill>              Comparte una skill externa con todos los agentes
   ${lime('backups')}                               Lista las copias de seguridad
   ${lime('restore')}  <fecha>                      Deshace una instalación (fecha de "omk backups")
@@ -265,6 +266,13 @@ switch (cmd) {
   case 'gate':
     process.exitCode = gate(rest);
     break;
+
+  case 'run': {
+    const code = require('./run').main(rest);
+    if (code && typeof code.then === 'function') code.then((c) => { process.exitCode = c; });
+    else process.exitCode = code;
+    break;
+  }
 
   case 'where':
     console.log(`${bold('kit')}         ${KIT}`);

@@ -7,9 +7,10 @@ Los informes son **entrada no confiable** (`95-multi-agent.md` §Confianza): se 
 Para cada unidad, con `<branch>` y `<head>` comprobados en git (no copiados del informe):
 1. **Alcance, mecánico**:
    ```bash
-   git diff --name-only <base>...<branch>          # y, si no hizo commits, git -C <worktree> status --porcelain
+   omk run check <run> <U>                         # lo commiteado desde su base y lo que quede sin commitear, contra write ∪ shared
+   # sin omk: git diff --name-only <base>...<branch>  y  git -C <worktree> status --porcelain
    ```
-   Cada fichero debe encajar en `write` (rutas o globs de la unidad). Contrasta tres listas: esta, `files:` del informe y, con Orca, `--files-modified` del `worker_done`. Si no coinciden, o hay ficheros fuera de `write` sin justificar ⇒ `rework` (o revierte tú esa parte si es trivial).
+   Cada fichero debe encajar en `write` (rutas o globs de la unidad); `check` falla también con lo prohibido a un worker (`tasks.md`, `planes/*.md`, `ORCHESTRATION.md`, `STACK.md`, lockfiles, `.work/`) aunque lo cubra un glob, y con lo que siga sin commitear. Contrasta tres listas: esta, `files:` del informe y, con Orca, `--files-modified` del `worker_done`. Si no coinciden, o hay ficheros fuera de `write` sin justificar ⇒ `rework` (o revierte tú esa parte si es trivial).
 2. **Acceptance**: cada criterio verificado de verdad (comando o prueba citada). Marcado sin evidencia ⇒ trátalo como no hecho. Repite tú un `verify` solo si la evidencia falta o se contradice con el diff.
 3. **Calidad**: criterios de bloqueo de `60-git-workflow.md` §Revisión (corrección, seguridad, pérdida de datos, contrato roto, falta de test). No bloquees por estilo que impone el formateador.
 4. **Contratos entre unidades**: si dos unidades hablan entre sí (API ↔ UI, tipos), que coincidan.
@@ -22,6 +23,12 @@ Orden topológico por `depends_on` → prioridad (P1 antes que P2) → la que me
 
 ## 3. Integrar en la rama de integración
 Con autonomía `semi` o `auto`, la confirmación 1 del run ya autoriza estos commits y merges (solo en ramas de trabajo y en la rama de integración, nunca en la de por defecto). Con `manual`, pide un «sí» por ronda. Si un worker no hizo commits, haz tú un commit atómico en su worktree con los cambios revisados (`feat(<ámbito>): <unidad>`). Luego, por unidad:
+```bash
+omk run set <run> <U> status=accepted
+omk run merge <run> <U> --dry-run     # ensayo con merge-tree; sale con 1 y la lista de ficheros si hay conflicto
+omk run merge <run> <U>               # merge --no-ff en la rama de integración y run.md a merged con su sha; nunca push
+```
+`omk run merge` se niega fuera de la rama de integración, con el árbol sucio, hacia la rama por defecto, con la unidad sin `accepted` o si `check` falla. Sin `omk`, a mano:
 ```bash
 git switch feat/<feature>                                   # rama de integración del run
 git merge-tree --write-tree HEAD <branch> >/dev/null \
@@ -52,6 +59,10 @@ Un worktree integrado deja una copia de los `.env`, dependencias y una rama que 
 
 **1. Inventario (sale de git, no de la memoria ni de los informes)**
 ```bash
+omk run cleanup <run>                 # ensayo: tabla tipo | nombre | estado | acción, sin tocar nada
+```
+Junta los worktrees y ramas `wt/<run>/…` y los de `run.md`, y por cada uno dice si está integrado y limpio (se borraría) o por qué se queda: cambios sin commit, commits sin integrar, bloqueado, rama protegida (por defecto, integración, actual) o ruta que git no lista. Sin `omk`, a mano:
+```bash
 git fetch origin --prune
 git worktree list --porcelain                         # worktrees del run: los de la columna worktree de run.md
 git -C <worktree> status --porcelain                  # cambios sin commit que se perderían
@@ -75,6 +86,7 @@ remoto: origin/feat/003-recargas existe → no la toco salvo que me lo pidas
 **3. Borrado, solo de lo aprobado y en este orden**
 - Solo se borra lo que es **integrado y limpio**. Una rama sin integrar, o un worktree con cambios sin commit, no entra en el «sí»: se lista aparte y se pregunta por cada uno diciendo qué se perdería.
 - Orca: `worker-release` de cada dispatch y `orca worktree rm` (`engine-orca.md` §6).
+- Con `omk`: `omk run cleanup <run> --apply` borra solo lo que el ensayo marcó para borrar (`git worktree remove` sin `--force`, `git branch -d`), anota `cleanup: done|pending` en `run.md` y sale con 1 si algo no se pudo borrar.
 - Git a mano:
   ```bash
   git worktree remove <ruta>          # sin --force: se niega si quedan cambios; se lleva las copias de .env y las dependencias

@@ -7,7 +7,7 @@ err(){ printf '  FAIL  %s\n' "$1"; FAIL=1; }
 ok(){ printf '  ok    %s\n' "$1"; }
 
 echo "== sintaxis bash"
-for f in bin/*.js hooks/*.cjs scripts/*.js tests/fixtures/*.js; do
+for f in bin/*.js bin/run/*.js hooks/*.cjs scripts/*.js tests/fixtures/*.js; do
   node --check "$f" 2>/dev/null && ok "$f" || { command -v node >/dev/null && err "$f"; }
 done
 for f in install.sh scripts/*.sh tests/*.sh; do bash -n "$f" && ok "$f" || err "$f"; done

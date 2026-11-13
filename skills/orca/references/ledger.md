@@ -3,7 +3,7 @@
 Un run dura horas y sobrevive a cosas que el coordinador no controla: compactación del contexto, cierre del agente, caída de Orca, reinicio del equipo. El estado vive en un fichero, no en la conversación.
 
 ## Fichero
-`.work/runs/<run>/run.md` del checkout principal. Lo escribe **solo** el coordinador (los workers no lo ven). Formato:
+`.work/runs/<run>/run.md` del checkout del coordinador (con Orca, su workspace). Lo escribe **solo** el coordinador (los workers no lo ven), y con `omk run`, no a mano: `omk run new` lo crea con las unidades de `units.md` en `pending`; `omk run set <run> <U> clave=valor…` cambia una fila (`status` respeta las transiciones de abajo, pasar a `dispatching` cuenta un intento y `updated` se pone solo); `omk run meta <run> clave=valor…` cambia la cabecera y `omk run log <run> <texto>` añade al log. Sin `omk`, edítalo a mano con este formato:
 ```markdown
 # run 20261107-recargas
 - input: speckit specs/003-recargas

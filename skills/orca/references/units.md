@@ -28,7 +28,7 @@ Toda entrada acaba en este formato antes de repartirse. Es el contrato entre coo
 ```
 Los campos marcados `opcional` pueden faltar: un worker o coordinador de una versión anterior los ignora sin romperse.
 
-Reglas del formato:
+Reglas del formato (`omk run plan <run>` las comprueba y calcula las rondas de §Grafo y rondas):
 - `write` con rutas reales o globs estrechos (`src/features/recargas/**`). Nunca `src/**`.
 - `acceptance` observable y comprobable. "Funciona bien" no vale.
 - `verify` sale de `STACK.md` §3. Si un comando no existe: `N/A` + `RISK:`.

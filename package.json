@@ -20,7 +20,7 @@
   "os": ["darwin", "linux", "win32"],
   "keywords": ["ai-agents", "claude-code", "antigravity", "gemini", "codex", "copilot", "cursor", "orca", "agent-skills", "multi-agent", "worktrees", "spec-kit", "agents-md"],
   "scripts": {
-    "test": "bash scripts/check.sh && bash tests/test_install.sh && bash tests/test_cli.sh && bash tests/test_team.sh && bash tests/test_orca.sh && bash tests/test_update.sh && bash tests/test_gate.sh && bash tests/test_speckit.sh",
+    "test": "bash scripts/check.sh && bash tests/test_install.sh && bash tests/test_cli.sh && bash tests/test_team.sh && bash tests/test_orca.sh && bash tests/test_update.sh && bash tests/test_gate.sh && bash tests/test_run.sh && bash tests/test_run_plan.sh && bash tests/test_run_git.sh && bash tests/test_run_cleanup.sh && bash tests/test_speckit.sh",
     "build:exe": "node scripts/build-exe.js"
   }
 }

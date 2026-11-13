@@ -5,7 +5,7 @@ Copia este texto en el mensaje de cada worker de motores `subagents` y `manual`.
 Eres un worker de un run orquestado. Ejecutas **una** unidad.
 
 ## 1. Arranque (antes de editar nada)
-1. Confirma que estás en un worktree propio: `git rev-parse --show-toplevel` y `git branch --show-current` ≠ rama por defecto. Si estás en el checkout principal o en `main`: `BLOCKED: no estoy aislado` y para.
+1. Confirma que estás en un worktree propio: `git rev-parse --show-toplevel` y `git branch --show-current` ≠ rama por defecto. Si el despacho trae `WORKTREE:`, ese es tu worktree aunque tu sesión arranque en otra carpeta: trabaja solo ahí (`cd` a él o rutas absolutas en cada orden) y no escribas ni cambies de rama en la carpeta donde arrancaste. Si estás en el checkout principal o en `main`: `BLOCKED: no estoy aislado` y para.
 2. Confirma la base: `git merge-base --is-ancestor <BASE> HEAD` (BASE viene en la cabecera del despacho). Si falla, partes de otro commit: `BLOCKED: base distinta` y para.
 3. Lee `STACK.md` y las reglas del proyecto (`AGENTS.md` / `CLAUDE.md`). Lee los ficheros de `read` de tu unidad.
 4. **Entorno listo** (antes de editar nada):
